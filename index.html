@@ -331,9 +331,12 @@ footer a{color:var(--g2);text-decoration:none;font-weight:600}
 /* ── RESPONSIVE ── */
 @media(max-width:900px){
   .dash-stats{grid-template-columns:repeat(2,1fr)}
-  .admin-layout{grid-template-columns:1fr}
-  .aside{flex-direction:row;overflow-x:auto;border-right:none;border-bottom:1px solid var(--br);padding:10px 14px;gap:5px}
+  .admin-layout{grid-template-columns:1fr;grid-template-rows:auto 1fr}
+  .aside{flex-direction:row;overflow-x:auto;border-right:none;border-bottom:1px solid var(--br);padding:8px 12px;gap:4px;align-items:center;flex-shrink:0}
   .aside-title{display:none}.a-cnt{display:none}
+  .ab{width:auto;flex-shrink:0;padding:7px 12px;font-size:.78rem}
+  .ab .ico{width:22px;height:22px;font-size:11px}
+  .amain{min-height:0;overflow-y:visible}
 }
 @media(max-width:640px){
   nav{padding:0 16px}
