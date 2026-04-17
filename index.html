@@ -714,6 +714,44 @@ const BIN_ID = '69df32c9aaba882197feab41';
 // To get it: open FB Messenger → your supplier's chat → copy URL (m.me/xxxx or messenger.com/t/xxxx)
 const SUPPLIER_FB = 'https://m.me/Marky.MABE';
 
+// ═══ TELEGRAM NOTIFICATION ═══
+const TG_TOKEN = '8508433223:AAEP3IWICo4oNn3vECI0Mw-BTBNmVpONZxM';
+const TG_CHAT  = '5197612943';
+
+async function tgNotify(order){
+  const status = {
+    awaiting_receipt: 'Awaiting GCash Receipt',
+    pending_approval: 'For Approval (Cash)'
+  }[order.status] || order.status;
+
+  const msg = [
+    '🔔 *NEW ORDER — PromoLoad*',
+    '───────────────────',
+    `📦 *Promo:* ${order.promo}`,
+    `👤 *Customer:* ${order.name}`,
+    `📱 *Number:* ${order.phone}`,
+    `💳 *Payment:* ${order.payMethod === 'gcash' ? 'GCash' : 'Cash'}`,
+    `💵 *Amount:* ₱${order.price}`,
+    `📋 *Status:* ${status}`,
+    `🆔 *Order ID:* ${order.id}`,
+    '───────────────────',
+    '👉 Open Admin to process this order.'
+  ].join('
+');
+
+  try{
+    await fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        chat_id: TG_CHAT,
+        text: msg,
+        parse_mode: 'Markdown'
+      })
+    });
+  }catch(e){ console.warn('Telegram notify failed:', e); }
+}
+
 let ords=[], curP=null, payM='gcash', viewId=null;
 
 // ═══ API HELPERS ═══
@@ -983,6 +1021,7 @@ async function placeOrder(){
         : '<b>Cash payment.</b> Admin will approve your order. Please prepare exact amount.';
     ov('ov-suc');
     toast('Order submitted successfully!','ok');
+    tgNotify(newOrder); // notify admin via Telegram
   } else {
     if(sbtn){sbtn.disabled=false;sbtn.textContent='Submit Order';}
     toast('Order failed. Please try again.','er');
