@@ -312,6 +312,13 @@ td{padding:11px 14px;font-size:.8rem;vertical-align:middle}
 
 /* ── FOOTER ── */
 footer{background:var(--s1);border-top:1px solid var(--br);padding:24px;text-align:center;color:var(--t3);font-size:.76rem;line-height:1.8}
+.contact-float{position:fixed;bottom:24px;left:24px;z-index:400;display:flex;flex-direction:column;align-items:center;gap:10px;}
+.cf-label{font-size:.62rem;color:var(--t2);font-weight:700;background:#fff;border:1.5px solid var(--br);border-radius:20px;padding:4px 10px;box-shadow:var(--sh);white-space:nowrap;opacity:0;transform:translateX(-8px);transition:all .2s;}
+.contact-float:hover .cf-label{opacity:1;transform:translateX(0)}
+.cf-btn{width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;text-decoration:none;box-shadow:0 4px 16px rgba(0,0,0,.15);transition:transform .18s,box-shadow .18s;}
+.cf-btn:hover{transform:translateY(-3px);box-shadow:0 8px 24px rgba(0,0,0,.2)}
+.cf-fb{background:#1877f2;color:#fff;}
+.cf-call{background:var(--ok);color:#fff;}
 footer b{color:var(--text);font-weight:700}
 footer a{color:var(--g2);text-decoration:none;font-weight:600}
 
@@ -675,6 +682,17 @@ footer a{color:var(--g2);text-decoration:none;font-weight:600}
       <button class="btn btn-g" onclick="copySupMsg()">Copy Message</button>
     </div>
   </div>
+</div>
+
+<!-- FLOATING CONTACT BUTTONS -->
+<div class="contact-float" id="contact-float">
+  <div class="cf-label">Need help?</div>
+  <a href="https://www.facebook.com/jameshope.bontuyan" target="_blank" class="cf-btn cf-fb" title="Message on Facebook">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z"/></svg>
+  </a>
+  <a href="tel:09355883709" class="cf-btn cf-call" title="Call or SMS">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81 19.79 19.79 0 01.22 1.18 2 2 0 012.22 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.91 7.09a16 16 0 006 6l.86-.86a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
+  </a>
 </div>
 
 <div id="toasts"></div>
