@@ -226,7 +226,10 @@ nav{position:sticky;top:0;z-index:200;background:rgba(255,255,255,.96);backdrop-
 .dsc-val{font-family:var(--mn);font-size:1.75rem;font-weight:700;line-height:1}
 .dsc.a .dsc-val{color:var(--g1)}.dsc.p .dsc-val{color:var(--warn)}.dsc.d .dsc-val{color:var(--ok)}.dsc.r .dsc-val{color:var(--g2)}
 .dsc-sub{font-size:.65rem;color:var(--t3);margin-top:4px}
-.tbl-wrap{background:var(--s1);border:1.5px solid var(--br);border-radius:14px;overflow:hidden;box-shadow:var(--sh)}
+.tbl-wrap{background:var(--s1);border:1.5px solid var(--br);border-radius:14px;overflow:hidden;box-shadow:var(--sh)}.tbl-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:thin}
+.tbl-scroll::-webkit-scrollbar{height:4px}
+.tbl-scroll::-webkit-scrollbar-track{background:var(--s2)}
+.tbl-scroll::-webkit-scrollbar-thumb{background:var(--br2);border-radius:4px}
 .tbl-tools{display:flex;gap:9px;padding:14px;border-bottom:1px solid var(--br);flex-wrap:wrap;align-items:center}
 .tbl-tools input,.tbl-tools select{background:var(--s2);border:1.5px solid var(--br);border-radius:9px;padding:8px 12px;color:var(--text);font-family:var(--font);font-size:.79rem;outline:none;transition:border-color .2s}
 .tbl-tools input:focus,.tbl-tools select:focus{border-color:var(--g1)}
@@ -301,7 +304,7 @@ td{padding:11px 14px;font-size:.8rem;vertical-align:middle}
 .btn-ok{background:var(--ok);color:#fff}.btn-ok:hover{filter:brightness(1.1)}
 .btn-warn{background:var(--warn);color:#fff}.btn-er{background:var(--er);color:#fff}
 .btn-sms{background:linear-gradient(135deg,#0070ff,#38bdf8);color:#fff}
-.btn-sm{padding:5px 11px;font-size:.72rem;border-radius:7px}
+.btn-sm{padding:5px 9px;font-size:.68rem;border-radius:7px;white-space:nowrap}
 
 /* ── TOASTS ── */
 #toasts{position:fixed;bottom:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:8px;pointer-events:none}
@@ -338,9 +341,13 @@ footer a{color:var(--g2);text-decoration:none;font-weight:600}
   .wrap{padding:32px 16px 60px}
   .pgrid{grid-template-columns:1fr}
   .fg{grid-template-columns:1fr}
-  .amain{padding:16px}
+  .amain{padding:12px}
   th.hm,td.hm{display:none}
   .pay-opts{grid-template-columns:1fr 1fr}
+  td{padding:8px 10px;font-size:.76rem}
+  th{padding:8px 10px}
+  .td-id{font-size:.64rem}
+  .btn-sm{padding:4px 7px;font-size:.65rem}
 }
 </style>
 </head>
@@ -574,7 +581,7 @@ footer a{color:var(--g2);text-decoration:none;font-weight:600}
           <div class="amain-hd"><div><h2>Dashboard</h2><p>Overview of your PromoLoad business.</p></div><button class="btn btn-b btn-sm" onclick="rAdmin()" style="display:flex;align-items:center;gap:6px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg> Refresh</button></div>
           <div class="dash-stats" id="dstats"></div>
           <h3 style="font-family:var(--hd);font-size:.92rem;margin-bottom:12px;color:var(--t2);font-weight:700">Recent Orders</h3>
-          <div class="tbl-wrap" id="recent-wrap"></div>
+          <div class="tbl-wrap tbl-scroll" id="recent-wrap"></div>
         </div>
         <div class="admin-panel" id="panel-ord">
           <div class="amain-hd"><div><h2>All Orders</h2><p>Manage and update order statuses.</p></div></div>
@@ -592,14 +599,14 @@ footer a{color:var(--g2);text-decoration:none;font-weight:600}
                 <option value="rejected">Rejected</option>
               </select>
             </div>
-            <div id="ord-tbl"></div>
+            <div class="tbl-scroll"><div id="ord-tbl"></div></div>
           </div>
         </div>
         <div class="admin-panel" id="panel-cust">
           <div class="amain-hd"><div><h2>Customers</h2><p>All customers who have placed orders.</p></div></div>
           <div class="tbl-wrap">
             <div class="tbl-tools"><input id="csrch" placeholder="Search customer..." oninput="rCusts()"></div>
-            <div id="cust-tbl"></div>
+            <div class="tbl-scroll"><div id="cust-tbl"></div></div>
           </div>
         </div>
       </main>
@@ -1079,7 +1086,7 @@ function ordTable(list,cpt){
     rejected:'Rejected'
   };
   if(!list.length)return '<div class="empty-tbl"><div class="ei"></div><p>No orders found.</p></div>';
-  return `<table><thead><tr><th>Order ID</th><th>Customer</th><th>Promo</th><th class="${cpt?'hm':''}">Payment</th><th>Price</th><th>Status</th><th class="${cpt?'hm':''}">Date</th><th>Actions</th></tr></thead><tbody>${list.map(o=>`<tr onclick="openAod('${o.id}')"><td class="td-id">${o.id}</td><td class="td-cust"><div class="nm">${h(o.name)}</div><div class="ph">${o.phone}</div></td><td class="td-promo">${o.icon} ${h(o.promo)}</td><td class="${cpt?'hm':''}">${{gcash:'<span style="color:#0070ff;font-weight:700">GCash</span>',cod:'<span style="color:#059669;font-weight:700">Cash</span>'}[o.payMethod]}</td><td class="td-price">&#8369;${o.price}</td><td><span class="sbadge st-${o.status}">${sl[o.status]}</span></td><td class="td-time ${cpt?'hm':''}">${fmt(o.createdAt)}</td><td onclick="event.stopPropagation()"><div style="display:flex;gap:4px;flex-wrap:wrap">${o.status==='awaiting_receipt'?`<button class="btn btn-b btn-sm" onclick="viewReceipt('${o.id}')">Receipt</button>`:''}${(o.status==='pending_approval'||o.status==='awaiting_receipt')?`<button class="btn btn-ok btn-sm" onclick="qst('${o.id}','approved')">Approve</button>`:''}${o.status==='approved'?`<button class="btn btn-warn btn-sm" onclick="qst('${o.id}','completed')">Complete</button>`:''}${(o.status!=='completed'&&o.status!=='cancelled'&&o.status!=='rejected')?`<button class="btn btn-er btn-sm" onclick="qst('${o.id}','${o.pay_method==='gcash'?'rejected':'cancelled'}')">Reject</button>`:''}<button class="btn btn-sms btn-sm" onclick="smsC('${o.id}')">SMS</button></div></td></tr>`).join('')}</tbody></table>`;
+  return `<table><thead><tr><th>Order ID</th><th>Customer</th><th>Promo</th><th class="${cpt?'hm':''}">Payment</th><th>Price</th><th>Status</th><th class="${cpt?'hm':''}">Date</th><th>Actions</th></tr></thead><tbody>${list.map(o=>`<tr onclick="openAod('${o.id}')"><td class="td-id">${o.id}</td><td class="td-cust"><div class="nm">${h(o.name)}</div><div class="ph">${o.phone}</div></td><td class="td-promo">${o.icon} ${h(o.promo)}</td><td class="${cpt?'hm':''}">${{gcash:'<span style="color:#0070ff;font-weight:700">GCash</span>',cod:'<span style="color:#059669;font-weight:700">Cash</span>'}[o.payMethod]}</td><td class="td-price">&#8369;${o.price}</td><td><span class="sbadge st-${o.status}">${sl[o.status]}</span></td><td class="td-time ${cpt?'hm':''}">${fmt(o.createdAt)}</td><td onclick="event.stopPropagation()"><div style="display:flex;gap:3px;flex-wrap:nowrap">${o.status==='awaiting_receipt'?`<button class="btn btn-b btn-sm" onclick="viewReceipt('${o.id}')">Receipt</button>`:''}${(o.status==='pending_approval'||o.status==='awaiting_receipt')?`<button class="btn btn-ok btn-sm" onclick="qst('${o.id}','approved')">Approve</button>`:''}${o.status==='approved'?`<button class="btn btn-warn btn-sm" onclick="qst('${o.id}','completed')">Complete</button>`:''}${(o.status!=='completed'&&o.status!=='cancelled'&&o.status!=='rejected')?`<button class="btn btn-er btn-sm" onclick="qst('${o.id}','${o.pay_method==='gcash'?'rejected':'cancelled'}')">Reject</button>`:''}<button class="btn btn-sms btn-sm" onclick="smsC('${o.id}')">SMS</button></div></td></tr>`).join('')}</tbody></table>`;
 }
 
 function viewReceipt(id){
