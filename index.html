@@ -323,7 +323,9 @@ td{padding:10px 13px;font-size:.8rem;vertical-align:middle}
 <script>
 // ═══ CONFIG ═══
 const AS='jh-admin-sess', AU='admin', AP='jamesHope2024';
-const API = 'api.php';
+// ═══ JSONBIN CONFIG ═══
+const JKEY = '$2a$10$g2lVJd07m0cutlfVI7W7XebVCAQ34rtVOLCgQrwaXcx2NPl8ky2bO';
+const BIN_ID = '69df32c9aaba882197feab41';
 
 // ── SUPPLIER FB MESSENGER ──
 // Set your supplier's FB Messenger link here
@@ -333,17 +335,24 @@ const SUPPLIER_FB = 'https://m.me/Marky.MABE';
 let ords=[], curP=null, payM='gcash', viewId=null;
 
 // ═══ API HELPERS ═══
-async function apiGet(action, params=''){
+// ═══ JSONBIN HELPERS ═══
+async function jbGet(){
   try{
-    const r = await fetch(API+'?action='+action+(params?'&'+params:''));
-    return await r.json();
-  }catch(e){ toast('Network error: '+e.message,'er'); return null; }
+    const r=await fetch('https://api.jsonbin.io/v3/b/'+BIN_ID+'/latest',{headers:{'X-Master-Key':JKEY}});
+    const d=await r.json();
+    return d.record||{orders:[]};
+  }catch(e){toast('Network error: '+e.message,'er');return null;}
 }
-async function apiGetReceipt(id){
+async function jbSave(data){
   try{
-    const r=await fetch(API+'?action=get_receipt&id='+encodeURIComponent(id));
-    return await r.json();
-  }catch(e){return null;}
+    const r=await fetch('https://api.jsonbin.io/v3/b/'+BIN_ID,{
+      method:'PUT',
+      headers:{'Content-Type':'application/json','X-Master-Key':JKEY},
+      body:JSON.stringify(data)
+    });
+    const d=await r.json();
+    return !!(d.metadata||d.record);
+  }catch(e){toast('Save error: '+e.message,'er');return false;}
 }
 
 async function apiPost(action, data){
@@ -369,18 +378,17 @@ const OPROMO=[
 ];
 
 async function ldO(){
-  const res = await apiGet('list');
-  if(res && res.orders){
-    ords = res.orders.map(o=>({
-      id:o.id, name:o.name, phone:o.phone,
-      promo:o.promo, net:o.net, nc:o.nc, val:o.val,
-      price:parseInt(o.price), origPrice:parseInt(o.orig_price)||parseInt(o.price),
-      payMethod:o.pay_method, note:o.note||'',
-      status:o.status, adminNote:o.admin_note||'',
-      createdAt:o.created_at, updatedAt:o.updated_at, icon:''
-    }));
-  } else { ords=[]; }
+  const rec=await jbGet();
+  if(rec&&rec.orders) ords=rec.orders;
+  else ords=[];
   updDot();
+}
+async function svO(){
+  // fetch cloud first to avoid overwriting
+  const rec=await jbGet();
+  const cloudOrds=rec?.orders||[];
+  // merge: update existing, add new
+  return await jbSave({orders:ords});
 }
 
 function genId(){return 'JH-'+Date.now();}
@@ -462,17 +470,22 @@ async function placeOrder(){
   const sbtn=document.querySelector('#ov-order .btn-g');
   if(sbtn){sbtn.disabled=true;sbtn.textContent='Sending...';}
   const id='JH-'+Date.now();
-  const res=await apiPost('create',{
+  // Fetch cloud orders first to avoid overwrite
+  const rec=await jbGet();
+  const cloudOrds=rec?.orders||[];
+  const newOrder={
     id, name:nm, phone:ph, promo:curP.name,
     net:curP.net, nc:curP.nc, val:curP.val,
-    price:curP.price, orig:curP.orig,
-    payMethod:payM, note:nt
-  });
-  if(res&&res.success){
-    // If GCash, upload receipt image
-    if(payM==='gcash'&&receiptImg){
-      await apiPost('upload_receipt',{id, receipt_img:receiptImg});
-    }
+    price:curP.price, origPrice:curP.orig, icon:curP.icon,
+    payMethod:payM, note:nt,
+    status: payM==='gcash' ? 'awaiting_receipt' : 'pending_approval',
+    adminNote:'', receiptImg: payM==='gcash' ? receiptImg : '',
+    createdAt:new Date().toISOString(), updatedAt:new Date().toISOString()
+  };
+  cloudOrds.unshift(newOrder);
+  const ok=await jbSave({orders:cloudOrds});
+  if(ok){
+    ords=cloudOrds;
     if(sbtn){sbtn.disabled=false;sbtn.textContent='Submit Order';}
     cov('ov-order');
     document.getElementById('suc-id').textContent=id;
@@ -484,9 +497,8 @@ async function placeOrder(){
     toast('Order submitted successfully!','ok');
   } else {
     if(sbtn){sbtn.disabled=false;sbtn.textContent='Submit Order';}
-    toast('Order failed: '+(res?.error||'Unknown error'),'er');
+    toast('Order failed. Please try again.','er');
   }
-}
 function goTrack(){const id=document.getElementById('suc-id').textContent;cov('ov-suc');gp('track');document.getElementById('track-inp').value=id;doTrack();}
 
 async function doTrack(){
@@ -494,8 +506,8 @@ async function doTrack(){
   const res=document.getElementById('track-res');
   if(!id){res.innerHTML='';return;}
   res.innerHTML='<div style="text-align:center;padding:24px;color:var(--t2);font-size:.85rem">Loading...</div>';
-  const data=await apiGet('get','id='+encodeURIComponent(id));
-  const o=data?.order ? {...data.order, payMethod:data.order.pay_method, adminNote:data.order.admin_note, createdAt:data.order.created_at} : null;
+  await ldO();
+  const o=ords.find(x=>x.id===id)||null;
   if(!o){res.innerHTML=`<div class="ot" style="text-align:center;padding:22px"><div style="font-size:2rem;margin-bottom:9px"></div><p style="color:var(--t2);font-size:.82rem">Walang order na <b style="color:var(--text)">${h(id)}</b>. Pakicheck ang iyong Order ID.</p></div>`;return;}
   const steps=['pending','processing','completed'],si=steps.indexOf(o.status);
   const sh=steps.map((s,i)=>`<div class="step ${o.status!=='cancelled'&&i<si?'done':o.status!=='cancelled'&&i===si?'cur':''}"><div class="step-dot">${i<si?'&#10003;':i+1}</div><div class="step-lbl">${{pending:'Pending',processing:'Processing',completed:'Completed'}[s]}</div></div>`).join('');
@@ -571,11 +583,10 @@ function ordTable(list,cpt){
 }
 
 async function viewReceipt(id){
-  const res=await apiGet('get_receipt','id='+encodeURIComponent(id));
-  if(!res||!res.receipt_img){toast('No receipt found for this order.','er');return;}
-  // Open in new tab
+  const o=ords.find(x=>x.id===id);
+  if(!o||!o.receiptImg){toast('No receipt found for this order.','er');return;}
   const w=window.open();
-  w.document.write('<html><body style="margin:0;background:#000;display:flex;align-items:center;justify-content:center;min-height:100vh"><img src="'+res.receipt_img+'" style="max-width:100%;max-height:100vh"></body></html>');
+  w.document.write('<html><body style="margin:0;background:#111;display:flex;align-items:center;justify-content:center;min-height:100vh"><img src="'+o.receiptImg+'" style="max-width:100%;max-height:100vh;border-radius:8px"></body></html>');
   w.document.close();
 }
 
@@ -599,9 +610,10 @@ async function saveAod(){
   const o=ords.find(x=>x.id===viewId);if(!o)return;
   o.status=document.getElementById('aod-st').value;
   o.adminNote=document.getElementById('aod-nt').value.trim();
-  const res=await apiPost('update',{id:o.id,status:o.status,adminNote:o.adminNote});
-  if(res&&res.success){cov('ov-aod');rAdmin();toast('Order updated!','ok');}
-  else toast('Update failed: '+(res?.error||'error'),'er');
+  o.updatedAt=new Date().toISOString();
+  const ok=await jbSave({orders:ords});
+  if(ok){cov('ov-aod');rAdmin();toast('Order updated!','ok');}
+  else toast('Update failed. Try again.','er');
 }
 function sendToSupplier(o){
   // Build the load order message for supplier
@@ -625,17 +637,19 @@ function sendToSupplier(o){
 
 async function qst(id,st){
   const o=ords.find(x=>x.id===id);
-  const res=await apiPost('update',{id,status:st,adminNote:''});
-  if(res&&res.success){
+  if(!o)return;
+  o.status=st;
+  o.updatedAt=new Date().toISOString();
+  const ok=await jbSave({orders:ords});
+  if(ok){
     rAdmin();
     toast('Status updated: '+st,'ok');
-    // Auto-open FB Messenger to supplier when approved
     if(st==='approved'&&o){
       setTimeout(()=>{
         if(confirm('Order approved! Open FB Messenger to notify your supplier?')){
           sendToSupplier(o);
         }
-      }, 400);
+      },400);
     }
   } else toast('Update failed','er');
 }
