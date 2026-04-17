@@ -355,16 +355,7 @@ async function jbSave(data){
   }catch(e){toast('Save error: '+e.message,'er');return false;}
 }
 
-async function apiPost(action, data){
-  try{
-    const r = await fetch(API+'?action='+action,{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify(data)
-    });
-    return await r.json();
-  }catch(e){ toast('Network error: '+e.message,'er'); return null; }
-}
+
 const LOADS=[10,15,20,30,50,100,115,300,500,1000];
 const OPROMO=[
   {n:'GoSURF50',net:'Smart',val:'3 Days',p:50,i:'',bg:'rgba(0,112,255,.12)',d:'1.5GB Data · 3 Days'},
@@ -499,6 +490,7 @@ async function placeOrder(){
     if(sbtn){sbtn.disabled=false;sbtn.textContent='Submit Order';}
     toast('Order failed. Please try again.','er');
   }
+}
 function goTrack(){const id=document.getElementById('suc-id').textContent;cov('ov-suc');gp('track');document.getElementById('track-inp').value=id;doTrack();}
 
 async function doTrack(){
@@ -582,7 +574,7 @@ function ordTable(list,cpt){
   return `<table><thead><tr><th>Order ID</th><th>Customer</th><th>Promo</th><th class="${cpt?'hm':''}">Bayad</th><th>Presyo</th><th>Status</th><th class="${cpt?'hm':''}">Petsa</th><th>Aksyon</th></tr></thead><tbody>${list.map(o=>`<tr onclick="openAod('${o.id}')"><td class="td-id">${o.id}</td><td class="td-cust"><div class="nm">${h(o.name)}</div><div class="ph">${o.phone}</div></td><td class="td-promo">${o.icon} ${h(o.promo)}</td><td class="${cpt?'hm':''}">${{gcash:'GCash',cod:'Cash'}[o.payMethod]}</td><td class="td-price">&#8369;${o.price}</td><td><span class="sbadge st-${o.status}">${sl[o.status]}</span></td><td class="td-time ${cpt?'hm':''}">${fmt(o.createdAt)}</td><td onclick="event.stopPropagation()"><div style="display:flex;gap:4px;flex-wrap:wrap">${o.status==='awaiting_receipt'?`<button class="btn btn-b btn-sm" onclick="viewReceipt('${o.id}')">Receipt</button>`:''}${(o.status==='pending_approval'||o.status==='awaiting_receipt')?`<button class="btn btn-ok btn-sm" onclick="qst('${o.id}','approved')">Approve</button>`:''}${o.status==='approved'?`<button class="btn btn-warn btn-sm" onclick="qst('${o.id}','completed')">Complete</button>`:''}${(o.status!=='completed'&&o.status!=='cancelled'&&o.status!=='rejected')?`<button class="btn btn-er btn-sm" onclick="qst('${o.id}','${o.pay_method==='gcash'?'rejected':'cancelled'}')">Reject</button>`:''}<button class="btn btn-sms btn-sm" onclick="smsC('${o.id}')">SMS</button></div></td></tr>`).join('')}</tbody></table>`;
 }
 
-async function viewReceipt(id){
+function viewReceipt(id){
   const o=ords.find(x=>x.id===id);
   if(!o||!o.receiptImg){toast('No receipt found for this order.','er');return;}
   const w=window.open();
