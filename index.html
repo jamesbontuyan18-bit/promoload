@@ -282,6 +282,8 @@ td{padding:11px 14px;font-size:.8rem;vertical-align:middle}
 .pay-opt{padding:12px;border-radius:10px;border:2px solid var(--br);background:var(--s2);cursor:pointer;text-align:center;transition:all .15s}
 .pay-opt:hover,.pay-opt.sel{border-color:var(--g1);background:rgba(0,184,122,.06)}
 .po-ico{font-size:1.4rem;margin-bottom:5px}.po-lbl{font-size:.77rem;font-weight:700}.po-sub{font-size:.62rem;color:var(--t2);margin-top:2px}
+.gcash-copy-btn{margin-top:5px;display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;border:1.5px solid rgba(0,112,255,.3);background:rgba(0,112,255,.06);color:var(--smart);font-size:.62rem;font-weight:700;cursor:pointer;font-family:var(--font);transition:all .15s}
+.gcash-copy-btn:hover{background:rgba(0,112,255,.12);border-color:var(--smart)}
 .receipt-upload{border:2px dashed var(--br2);border-radius:10px;padding:22px;text-align:center;cursor:pointer;transition:all .2s;margin-top:4px}
 .receipt-upload:hover{border-color:var(--g1);background:rgba(0,184,122,.04)}
 .receipt-upload input{display:none}
@@ -609,7 +611,7 @@ footer a{color:var(--g2);text-decoration:none;font-weight:600}
     </div>
     <div class="fr"><label>Payment Method</label>
       <div class="pay-opts">
-        <div class="pay-opt sel" onclick="sPay('gcash',this)"><div class="po-ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0070ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg></div><div class="po-lbl">GCash</div><div class="po-sub">09355883709 &middot; Ruth B.</div></div>
+        <div class="pay-opt sel" onclick="sPay('gcash',this)"><div class="po-ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0070ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg></div><div class="po-lbl">GCash</div><div class="po-sub">09355883709 &middot; Ruth B.<br><button onclick="event.stopPropagation();copyGcash()" class="gcash-copy-btn">Copy Number</button></div></div>
         <div class="pay-opt" onclick="sPay('cod',this)"><div class="po-ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="3"/><path d="M17 6V4M7 6V4M17 20v-2M7 20v-2"/></svg></div><div class="po-lbl">Cash</div><div class="po-sub">Cash payment</div></div>
       </div>
     </div>
@@ -747,6 +749,37 @@ function gp(n){
   document.getElementById('ntab-'+n).classList.add('on');
   if(n==='admin')initAdmin();
   window.scrollTo(0,0);
+}
+
+// ═══ GCASH COPY ═══
+function copyGcash(){
+  const num = '09355883709';
+  // Try modern clipboard API first
+  if(navigator.clipboard && window.isSecureContext){
+    navigator.clipboard.writeText(num).then(()=>{
+      toast('GCash number copied!','ok');
+    }).catch(()=>fallbackCopy(num));
+  } else {
+    fallbackCopy(num);
+  }
+}
+function fallbackCopy(text){
+  // Fallback: create temp input, select, copy
+  const el = document.createElement('input');
+  el.value = text;
+  el.style.position = 'fixed';
+  el.style.opacity = '0';
+  document.body.appendChild(el);
+  el.focus();
+  el.select();
+  el.setSelectionRange(0, 99999);
+  try{
+    document.execCommand('copy');
+    toast('GCash number copied!','ok');
+  }catch(e){
+    toast('09355883709 — copy manually','in');
+  }
+  document.body.removeChild(el);
 }
 
 // ═══ CUSTOM LOAD ═══
