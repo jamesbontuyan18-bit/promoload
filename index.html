@@ -320,6 +320,22 @@ td{padding:10px 13px;font-size:.8rem;vertical-align:middle}
 
 <div id="toasts"></div>
 
+<!-- SUPPLIER MESSAGE MODAL -->
+<div class="overlay" id="sup-ov">
+  <div class="modal" style="max-width:420px">
+    <div class="mhd">
+      <div><div class="mtitle">Message for Supplier</div><div class="msub">Copy and send to your load supplier</div></div>
+      <button class="mclose" onclick="cov('sup-ov')">&#10005;</button>
+    </div>
+    <textarea id="sup-msg-text" readonly style="width:100%;background:var(--s2);border:1.5px solid var(--br);border-radius:10px;padding:12px;font-family:var(--mn);font-size:.82rem;color:var(--text);resize:none;height:180px;outline:none;line-height:1.6"></textarea>
+    <div class="mft" style="margin-top:14px">
+      <button class="btn btn-b" onclick="cov('sup-ov')">Close</button>
+      <button class="btn" style="background:#1877f2;color:#fff" onclick="window.open(SUPPLIER_FB,'_blank')">Open FB Messenger</button>
+      <button class="btn btn-g" onclick="copySupMsg()">Copy Message</button>
+    </div>
+  </div>
+</div>
+
 <script>
 // ═══ CONFIG ═══
 const AS='jh-admin-sess', AU='admin', AP='jamesHope2024';
@@ -500,30 +516,48 @@ async function doTrack(){
   res.innerHTML='<div style="text-align:center;padding:24px;color:var(--t2);font-size:.85rem">Loading...</div>';
   await ldO();
   const o=ords.find(x=>x.id===id)||null;
-  if(!o){res.innerHTML=`<div class="ot" style="text-align:center;padding:22px"><div style="font-size:2rem;margin-bottom:9px"></div><p style="color:var(--t2);font-size:.82rem">Walang order na <b style="color:var(--text)">${h(id)}</b>. Pakicheck ang iyong Order ID.</p></div>`;return;}
+  if(!o){
+    res.innerHTML='<div class="ot" style="text-align:center;padding:22px"><p style="color:var(--t2);font-size:.82rem">No order found for <b style="color:var(--text)">'+id+'</b>. Please check your Order ID.</p></div>';
+    return;
+  }
   const steps=['pending','processing','completed'],si=steps.indexOf(o.status);
-  const sh=steps.map((s,i)=>`<div class="step ${o.status!=='cancelled'&&i<si?'done':o.status!=='cancelled'&&i===si?'cur':''}"><div class="step-dot">${i<si?'&#10003;':i+1}</div><div class="step-lbl">${{pending:'Pending',processing:'Processing',completed:'Completed'}[s]}</div></div>`).join('');
+  const sh=steps.map((s,i)=>'<div class="step '+(o.status!=="cancelled"&&i<si?"done":o.status!=="cancelled"&&i===si?"cur":"")+'"><div class="step-dot">'+(i<si?"&#10003;":i+1)+'</div><div class="step-lbl">'+{pending:"Pending",processing:"Processing",completed:"Completed"}[s]+'</div></div>').join("");
   const sl={
-    pending:'Pending',
-    awaiting_receipt:'Awaiting Receipt',
-    pending_approval:'For Approval',
-    approved:'Approved',
-    processing:'Processing',
-    completed:'Completed',
-    cancelled:'Cancelled',
-    rejected:'Rejected'
+    pending:"Pending",awaiting_receipt:"Awaiting Receipt",pending_approval:"For Approval",
+    approved:"Approved",processing:"Processing",completed:"Completed",
+    cancelled:"Cancelled",rejected:"Rejected"
   };
-  res.innerHTML=`<div class="ot"><div class="ot-hd"><div><div class="ot-id">${o.id}</div><div class="ot-promo">${o.icon} ${h(o.promo)}</div></div><span class="sbadge st-${o.status}">${sl[o.status]}</span></div>${o.status!=='cancelled'?`<div class="stepper">${sh}</div>`:''}<div style="margin-top:12px"><div class="or-row"><span class="l">Customer</span><span class="r">${h(o.name)}</span></div><div class="or-row"><span class="l">Load Number</span><span class="r" style="font-family:var(--mn)">${h(o.phone)}</span></div><div class="or-row"><span class="l">Network</span><span class="r">${h(o.net)}</span></div><div class="or-row"><span class="l">Validity</span><span class="r">${h(o.val)}</span></div><div class="or-row"><span class="l">Bayad</span><span class="r">${{gcash:'GCash',cod:'Cash'}[o.payMethod]}</span></div><div class="or-row"><span class="l">Presyo</span><span class="r g">&#8369;${o.price}</span></div><div class="or-row"><span class="l">Nag-order</span><span class="r" style="font-size:.72rem">${fmt(o.createdAt)}</span></div></div>${o.adminNote?`<div class="tr-note"><b>Note mula sa seller:</b> ${h(o.adminNote)}</div>`:''}<div class="tr-note" style="margin-top:10px;${o.status==='completed'?'background:rgba(16,185,129,.08);border-color:rgba(16,185,129,.25)':''}">({
-  awaiting_receipt:'<b>Action needed:</b> Please upload your GCash receipt so we can verify your payment.',
-  pending_approval:'<b>For Approval:</b> Your order is being reviewed. We will process it shortly.',
-  approved:'<b>Approved!</b> Your order is confirmed and approved. We are now processing your load!',
-  processing:'<b>Processing:</b> Your load is being sent. Almost there!',
-  completed:'<b>Load sent!</b> Please check your phone. Thank you for ordering!',
-  cancelled:'<b>Cancelled.</b> Sorry about that. Please don't hesitate to order again!',
-  rejected:'<b>Rejected.</b> Your receipt could not be verified. Please contact us for assistance.',
-  pending:'<b>Pending:</b> Your order has been received. Please wait.'
-}[o.status]||'<b>Status:</b> Please wait.')</div></div>`;
+  const msgs={
+    awaiting_receipt:"<b>Action needed:</b> Please upload your GCash receipt so we can verify your payment.",
+    pending_approval:"<b>For Approval:</b> Your order is being reviewed. We will process it shortly.",
+    approved:"<b>Approved!</b> Your order is confirmed. We are now processing your load!",
+    processing:"<b>Processing:</b> Your load is being sent. Almost there!",
+    completed:"<b>Load sent!</b> Please check your phone. Thank you for ordering!",
+    cancelled:"<b>Cancelled.</b> Sorry about that. Feel free to order again!",
+    rejected:"<b>Rejected.</b> Your receipt could not be verified. Please contact us.",
+    pending:"<b>Pending:</b> Your order has been received. Please wait."
+  };
+  const noteStyle=o.status==="completed"?"background:rgba(16,185,129,.08);border-color:rgba(16,185,129,.25)":"";
+  const statusMsg=msgs[o.status]||"<b>Status:</b> Please wait.";
+  const adminNote=o.adminNote?'<div class="tr-note"><b>Note from seller:</b> '+h(o.adminNote)+'</div>':"";
+  res.innerHTML='<div class="ot">'
+    +'<div class="ot-hd"><div><div class="ot-id">'+o.id+'</div><div class="ot-promo">'+h(o.promo)+'</div></div>'
+    +'<span class="sbadge st-'+o.status+'">'+sl[o.status]+'</span></div>'
+    +(o.status!=="cancelled"?'<div class="stepper">'+sh+'</div>':"")
+    +'<div style="margin-top:12px">'
+    +'<div class="or-row"><span class="l">Customer</span><span class="r">'+h(o.name)+'</span></div>'
+    +'<div class="or-row"><span class="l">Load Number</span><span class="r" style="font-family:var(--mn)">'+h(o.phone)+'</span></div>'
+    +'<div class="or-row"><span class="l">Network</span><span class="r">'+h(o.net)+'</span></div>'
+    +'<div class="or-row"><span class="l">Validity</span><span class="r">'+h(o.val)+'</span></div>'
+    +'<div class="or-row"><span class="l">Payment</span><span class="r">'+({gcash:"GCash",cod:"Cash"}[o.payMethod]||o.payMethod)+'</span></div>'
+    +'<div class="or-row"><span class="l">Price</span><span class="r g">&#8369;'+o.price+'</span></div>'
+    +'<div class="or-row"><span class="l">Ordered</span><span class="r" style="font-size:.72rem">'+fmt(o.createdAt)+'</span></div>'
+    +'</div>'
+    +adminNote
+    +'<div class="tr-note" style="margin-top:10px;'+noteStyle+'">'+statusMsg+'</div>'
+    +'</div>';
 }
+
 
 function doLogin(){
   const u=document.getElementById('al-u').value.trim(),p=document.getElementById('al-p').value;
@@ -608,7 +642,6 @@ async function saveAod(){
   else toast('Update failed. Try again.','er');
 }
 function sendToSupplier(o){
-  // Build the load order message for supplier
   const msg = [
     'LOAD ORDER',
     '---',
@@ -621,10 +654,21 @@ function sendToSupplier(o){
     'Please send load. Thank you!'
   ].join('\n');
 
-  // Open FB Messenger with pre-filled message
-  const url = SUPPLIER_FB + '?text=' + encodeURIComponent(msg);
-  window.open(url, '_blank');
-  toast('Opening FB Messenger for supplier!', 'ok');
+  // Show copy modal
+  document.getElementById('sup-msg-text').value = msg;
+  document.getElementById('sup-ov').classList.add('on');
+}
+
+function copySupMsg(){
+  const ta = document.getElementById('sup-msg-text');
+  ta.select();
+  ta.setSelectionRange(0,99999);
+  navigator.clipboard.writeText(ta.value).then(()=>{
+    toast('Message copied! I-paste na sa FB Messenger.','ok');
+  }).catch(()=>{
+    document.execCommand('copy');
+    toast('Message copied!','ok');
+  });
 }
 
 async function qst(id,st){
