@@ -385,7 +385,7 @@ footer a{color:var(--g2);text-decoration:none;font-weight:600}
       <div class="hero-stats">
         <div class="hs"><div class="hs-val">&#8369;48</div><div class="hs-lbl">Lowest Promo</div></div>
         <div class="hs-div"></div>
-        <div class="hs"><div class="hs-val">8+</div><div class="hs-lbl">Promos</div></div>
+        <div class="hs"><div class="hs-val">10+</div><div class="hs-lbl">Promos</div></div>
         <div class="hs-div"></div>
         <div class="hs"><div class="hs-val">24/7</div><div class="hs-lbl">Available</div></div>
       </div>
@@ -496,6 +496,30 @@ footer a{color:var(--g2);text-decoration:none;font-weight:600}
           <ul class="pfeats"><li><b>3GB</b> Open Access Data</li><li><b>3GB</b> App Freebies (1GB/day)</li><li><b>Unli</b> Texts to All Networks</li><li><b>3 Days</b> Validity</li></ul>
         </div>
         <div class="pc-bot"><div class="price-wrap"><span class="pold">&#8369;50</span><span class="pnew">&#8369;48</span><span class="psave">Save &#8369;2</span></div><button class="obtn">Load Now</button></div>
+      </div>
+
+      <!-- ANS20 -->
+      <div class="pc tm" onclick="openOrd({name:'All Net Surf 20 (ANS20)',net:'TM Only',nc:'tnt',val:'2 Days',price:20,orig:20,icon:'',feats:['300MB Open Access Data','150MB/day FunALIW Apps','Unli Calls to TM &amp; Globe','Unli Texts to All Networks']})">
+        <div class="pc-glow"></div>
+        <div class="pc-top">
+          <div class="pc-badges"><span class="ntag tm-t">TM</span></div>
+          <div class="pname">All Net Surf 20 <span style="font-size:.8rem;color:var(--t2)">(ANS20)</span></div>
+          <div class="pinfo">2 Days &middot; TM Users Only</div>
+          <ul class="pfeats"><li><b>300MB</b> Open Access Data</li><li><b>Unli</b> Calls to TM &amp; Globe</li><li><b>Unli</b> Texts to All Networks</li><li><b>150MB/day</b> FunALIW Apps</li></ul>
+        </div>
+        <div class="pc-bot"><div class="price-wrap"><span class="pnew">&#8369;20</span><span class="psave">Regular Price</span></div><button class="obtn">Load Now</button></div>
+      </div>
+
+      <!-- ANS30 -->
+      <div class="pc tm" onclick="openOrd({name:'All Net Surf 30 (ANS30)',net:'TM Only',nc:'tnt',val:'2 Days',price:30,orig:30,icon:'',feats:['750MB Open Access Data','150MB/day FunALIW Apps','Unli Calls to All Networks','Unli Texts to All Networks']})">
+        <div class="pc-glow"></div>
+        <div class="pc-top">
+          <div class="pc-badges"><span class="ntag tm-t">TM</span></div>
+          <div class="pname">All Net Surf 30 <span style="font-size:.8rem;color:var(--t2)">(ANS30)</span></div>
+          <div class="pinfo">2 Days &middot; TM Users Only</div>
+          <ul class="pfeats"><li><b>750MB</b> Open Access Data</li><li><b>Unli</b> Calls to All Networks</li><li><b>Unli</b> Texts to All Networks</li><li><b>150MB/day</b> FunALIW Apps</li></ul>
+        </div>
+        <div class="pc-bot"><div class="price-wrap"><span class="pnew">&#8369;30</span><span class="psave">Regular Price</span></div><button class="obtn">Load Now</button></div>
       </div>
 
       <div class="pc gl" onclick="openOrd({name:'Go59',net:'Globe Only',nc:'smart',val:'3 Days',price:57,orig:59,icon:'',feats:['6GB Data &mdash; All Sites','Unli Texts to All Networks','3 Days Validity','Globe Users']})">
@@ -847,6 +871,8 @@ const ALL_PROMOS = [
   {name:'EasySurf99',        tags:'tm easysurf ez99 3gb 14gb 95'},
   {name:'EasySurf50 EZ50',   tags:'tm easysurf ez50 3gb 48'},
   {name:'Go59',              tags:'globe go59 6gb 57'},
+  {name:'All Net Surf 20 ANS20', tags:'tm ans20 all net surf 300mb unli calls globe 20'},
+  {name:'All Net Surf 30 ANS30', tags:'tm ans30 all net surf 750mb unli calls all network 30'},
 ];
 
 function filterPromos(q){
