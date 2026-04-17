@@ -714,43 +714,6 @@ const BIN_ID = '69df32c9aaba882197feab41';
 // To get it: open FB Messenger → your supplier's chat → copy URL (m.me/xxxx or messenger.com/t/xxxx)
 const SUPPLIER_FB = 'https://m.me/Marky.MABE';
 
-// ═══ TELEGRAM NOTIFICATION ═══
-const TG_TOKEN = '8508433223:AAEP3IWICo4oNn3vECI0Mw-BTBNmVpONZxM';
-const TG_CHAT  = '5197612943';
-
-async function tgNotify(order){
-  const status = {
-    awaiting_receipt: 'Awaiting GCash Receipt',
-    pending_approval: 'For Approval (Cash)'
-  }[order.status] || order.status;
-
-  const msg = [
-    '🔔 *NEW ORDER — PromoLoad*',
-    '───────────────────',
-    `📦 *Promo:* ${order.promo}`,
-    `👤 *Customer:* ${order.name}`,
-    `📱 *Number:* ${order.phone}`,
-    `💳 *Payment:* ${order.payMethod === 'gcash' ? 'GCash' : 'Cash'}`,
-    `💵 *Amount:* ₱${order.price}`,
-    `📋 *Status:* ${status}`,
-    `🆔 *Order ID:* ${order.id}`,
-    '───────────────────',
-    '👉 Open Admin to process this order.'
-  ].join('
-');
-
-  try{
-    await fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`, {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({
-        chat_id: TG_CHAT,
-        text: msg,
-        parse_mode: 'Markdown'
-      })
-    });
-  }catch(e){ console.warn('Telegram notify failed:', e); }
-}
 
 let ords=[], curP=null, payM='gcash', viewId=null;
 
@@ -888,13 +851,11 @@ function filterPromos(q){
   // Map card elements (lazy)
   const cards = document.querySelectorAll('.pgrid .pc');
   cards.forEach((el, i) => { if(ALL_PROMOS[i]) ALL_PROMOS[i].el = el; });
-  const loadCards = document.querySelectorAll('.lgrid .lb');
-
   if(!q){
     cards.forEach(el => el.style.display = '');
-    loadCards.forEach(el => el.style.display = '');
     document.getElementById('promo-no-results')?.remove();
-    countEl.style.display = 'none';
+    countEl.textContent = '';
+    clearBtn.classList.remove('show');
     return;
   }
 
@@ -905,23 +866,16 @@ function filterPromos(q){
     el.style.display = match ? '' : 'none';
     if(match) shown++;
   });
-  // Also search regular load
-  loadCards.forEach(el => {
-    const txt = el.textContent.toLowerCase();
-    const match = txt.includes(q) || 'load regular eload'.includes(q) || q.includes('load');
-    el.style.display = match ? '' : 'none';
-    if(match) shown++;
-  });
+  // Regular load section always visible
 
   // No results
   document.getElementById('promo-no-results')?.remove();
-  countEl.style.display = 'block';
-  countEl.textContent = shown > 0 ? shown + ' promo' + (shown > 1 ? 's' : '') + ' found' : '';
+  countEl.textContent = shown > 0 ? shown + ' promo' + (shown > 1 ? 's' : '') + ' found' : 'No promos found';
   if(shown === 0){
     const nr = document.createElement('div');
     nr.id = 'promo-no-results';
     nr.className = 'no-results';
-    nr.innerHTML = '<div class="nr-ico">&#128269;</div><p>No promos found for <b>"' + q + '"</b><br>Try: Smart, TNT, TM, Globe, EZ50, Go59...</p>';
+    nr.innerHTML = '<div class="nr-ico" style="font-size:2rem;opacity:.4;margin-bottom:10px">&#128269;</div><p>No promos found for <b>"' + q + '"</b><br><span style="color:var(--t3)">Try: Smart, TNT, TM, Globe, EZ50, Go59</span></p>';
     document.querySelector('.pgrid').after(nr);
   }
 }
@@ -1021,7 +975,6 @@ async function placeOrder(){
         : '<b>Cash payment.</b> Admin will approve your order. Please prepare exact amount.';
     ov('ov-suc');
     toast('Order submitted successfully!','ok');
-    tgNotify(newOrder); // notify admin via Telegram
   } else {
     if(sbtn){sbtn.disabled=false;sbtn.textContent='Submit Order';}
     toast('Order failed. Please try again.','er');
@@ -1111,7 +1064,7 @@ function rCusts(){
   const cl=Object.values(cm).filter(c=>c.name.toLowerCase().includes(s)||c.phone.includes(s)).sort((a,b)=>b.ords.length-a.ords.length);
   const tbl=document.getElementById('cust-tbl');
   if(!cl.length){tbl.innerHTML='<div class="empty-tbl"><div class="ei"></div><p>No customers yet.</p></div>';return;}
-  tbl.innerHTML=`<table><thead><tr><th>Customer</th><th>Total Orders</th><th>Completed</th><th>Total Spent</th><th class="hm">Huling Order</th></tr></thead><tbody>${cl.map(c=>{const lo=c.ords.sort((a,b)=>b.createdAt>a.createdAt?1:-1)[0],dn=c.ords.filter(o=>o.status==='completed').length;return `<tr><td class="td-cust"><div class="nm">${h(c.name)}</div><div class="ph">${c.phone}</div></td><td><b>${c.ords.length}</b></td><td style="color:var(--ok)"><b>${dn}</b></td><td class="td-price">&#8369;${c.spent.toLocaleString()}</td><td class="td-time hm">${fmt(lo.createdAt)}</td></tr>`;}).join('')}</tbody></table>`;
+  tbl.innerHTML=`<table><thead><tr><th>Customer</th><th>Total Orders</th><th>Completed</th><th>Total Spent</th><th class="hm">Last Order</th></tr></thead><tbody>${cl.map(c=>{const lo=c.ords.sort((a,b)=>b.createdAt>a.createdAt?1:-1)[0],dn=c.ords.filter(o=>o.status==='completed').length;return `<tr><td class="td-cust"><div class="nm">${h(c.name)}</div><div class="ph">${c.phone}</div></td><td><b>${c.ords.length}</b></td><td style="color:var(--ok)"><b>${dn}</b></td><td class="td-price">&#8369;${c.spent.toLocaleString()}</td><td class="td-time hm">${fmt(lo.createdAt)}</td></tr>`;}).join('')}</tbody></table>`;
 }
 
 function ordTable(list,cpt){
@@ -1142,7 +1095,7 @@ function openAod(id){
   viewId=id;
   document.getElementById('aod-id').textContent=o.id;
   const pm={gcash:'<span style="color:#0070ff;font-weight:700">GCash</span>',cod:'<span style="color:#059669;font-weight:700">Cash</span>'};
-  document.getElementById('aod-body').innerHTML=`<div class="info-block"><div class="ib-row"><span class="lb">Promo</span><span class="vl">${o.icon} ${h(o.promo)}</span></div><div class="ib-row"><span class="lb">Network</span><span class="vl">${h(o.net)}</span></div><div class="ib-row"><span class="lb">Validity</span><span class="vl">${h(o.val)}</span></div><div class="ib-row"><span class="lb">Presyo</span><span class="vl g">&#8369;${o.price}</span></div><div class="ib-row"><span class="lb">Bayad</span><span class="vl">${pm[o.payMethod]}</span></div></div><div class="info-block"><div class="ib-row"><span class="lb">Customer</span><span class="vl">${h(o.name)}</span></div><div class="ib-row"><span class="lb">Load Number</span><span class="vl" style="font-family:var(--mn)">${o.phone}</span></div>${o.note?`<div class="ib-row"><span class="lb">Note</span><span class="vl" style="color:var(--t2)">${h(o.note)}</span></div>`:''}<div class="ib-row"><span class="lb">Nag-order</span><span class="vl" style="font-size:.72rem;font-family:var(--mn)">${fmt(o.createdAt)}</span></div></div><div class="fr"><label>Status</label><select id="aod-st">
+  document.getElementById('aod-body').innerHTML=`<div class="info-block"><div class="ib-row"><span class="lb">Promo</span><span class="vl">${o.icon} ${h(o.promo)}</span></div><div class="ib-row"><span class="lb">Network</span><span class="vl">${h(o.net)}</span></div><div class="ib-row"><span class="lb">Validity</span><span class="vl">${h(o.val)}</span></div><div class="ib-row"><span class="lb">Price</span><span class="vl g">&#8369;${o.price}</span></div><div class="ib-row"><span class="lb">Payment</span><span class="vl">${pm[o.payMethod]}</span></div></div><div class="info-block"><div class="ib-row"><span class="lb">Customer</span><span class="vl">${h(o.name)}</span></div><div class="ib-row"><span class="lb">Load Number</span><span class="vl" style="font-family:var(--mn)">${o.phone}</span></div>${o.note?`<div class="ib-row"><span class="lb">Note</span><span class="vl" style="color:var(--t2)">${h(o.note)}</span></div>`:''}<div class="ib-row"><span class="lb">Ordered</span><span class="vl" style="font-size:.72rem;font-family:var(--mn)">${fmt(o.createdAt)}</span></div></div><div class="fr"><label>Status</label><select id="aod-st">
   <option value="awaiting_receipt" ${o.status==='awaiting_receipt'?'selected':''}>Awaiting Receipt</option>
   <option value="pending_approval" ${o.status==='pending_approval'?'selected':''}>For Approval</option>
   <option value="approved" ${o.status==='approved'?'selected':''}>Approved</option>
@@ -1184,12 +1137,9 @@ function copySupMsg(){
   const ta = document.getElementById('sup-msg-text');
   ta.select();
   ta.setSelectionRange(0,99999);
-  navigator.clipboard.writeText(ta.value).then(()=>{
-    toast('Message copied! I-paste na sa FB Messenger.','ok');
-  }).catch(()=>{
-    document.execCommand('copy');
-    toast('Message copied!','ok');
-  });
+  if(navigator.clipboard && window.isSecureContext){
+    navigator.clipboard.writeText(ta.value).then(()=>toast('Message copied!','ok')).catch(()=>{document.execCommand('copy');toast('Message copied!','ok');});
+  } else { document.execCommand('copy'); toast('Message copied!','ok'); }
 }
 
 async function qst(id,st){
